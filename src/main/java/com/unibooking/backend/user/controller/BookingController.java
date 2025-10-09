@@ -1,39 +1,64 @@
 package com.unibooking.backend.user.controller;
 
-import com.unibooking.backend.user.dto.AppointmentRequestDTO;
-import com.unibooking.backend.user.dto.BookingDTO;
-import com.unibooking.backend.user.dto.SlotDTO;
-import com.unibooking.backend.user.service.BookingService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import com.unibooking.backend.Exception.BookingNotFoundException; import com.unibooking.backend.Exception.SlotAlreadyBookedException; import com.unibooking.backend.user.dto.BookingDTO; import com.unibooking.backend.user.service.BookingService; import lombok.RequiredArgsConstructor; import org.springframework.http.HttpStatus; import org.springframework.http.ResponseEntity; import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@RestController
-@RequestMapping("/api/booking")
-@RequiredArgsConstructor
-public class BookingController {
+@RestController @RequestMapping("/api/booking") @RequiredArgsConstructor public class BookingController {
 
     private final BookingService bookingService;
 
-    // 1. Create a new booking
     @PostMapping("/createBooking")
-    public ResponseEntity<BookingDTO> createBooking(@RequestBody BookingDTO bookingDTO) {
-        BookingDTO createdBooking = bookingService.createBooking(bookingDTO);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdBooking);
+    public ResponseEntity<?> createBooking(@RequestBody BookingDTO bookingDTO) {
+        try {
+            BookingDTO createdBooking = bookingService.createBooking(bookingDTO);
+            return ResponseEntity.status(HttpStatus.CREATED).body(createdBooking);
+        } catch (SlotAlreadyBookedException ex) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
+        }
     }
 
-    // 2. Get all bookings for a specific user
     @GetMapping("/user/{emailId}")
     public ResponseEntity<List<BookingDTO>> getBookingsByUser(@PathVariable String emailId) {
         return ResponseEntity.ok(bookingService.getBookingsByUser(emailId));
     }
 
-    // 3. Get all bookings for a specific provider
     @GetMapping("/provider/{providerId}")
     public ResponseEntity<List<BookingDTO>> getBookingsByProvider(@PathVariable Long providerId) {
         return ResponseEntity.ok(bookingService.getBookingsByProvider(providerId));
     }
+
+    @GetMapping("/slot/{slotId}/availability")
+    public ResponseEntity<Boolean> isSlotAvailable(@PathVariable Long slotId) {
+        return ResponseEntity.ok(bookingService.isSlotAvailable(slotId));
+    }
+
+    @PutMapping("/cancel/{bookingId}")
+    public ResponseEntity<?> cancelBooking(@PathVariable Long bookingId) {
+        try {
+            bookingService.cancelBooking(bookingId);
+            return ResponseEntity.ok("Booking cancelled successfully.");
+        } catch (BookingNotFoundException ex) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+        }
+    }
+
+    @PutMapping("/reschedule/{bookingId}/{newSlotId}")
+    public ResponseEntity<?> rescheduleBooking(@PathVariable Long bookingId, @PathVariable Long newSlotId) {
+        try {
+            BookingDTO updatedBooking = bookingService.rescheduleBooking(bookingId, newSlotId);
+            return ResponseEntity.ok(updatedBooking);
+        } catch (BookingNotFoundException | SlotAlreadyBookedException ex) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
+        }
+    }
+
+    @GetMapping("/user/{emailId}/paginated")
+    public ResponseEntity<List<BookingDTO>> getPaginatedBookingsByUser(
+            @PathVariable String emailId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(bookingService.getPaginatedBookingsByUser(emailId, page, size));
+    }
+
 }

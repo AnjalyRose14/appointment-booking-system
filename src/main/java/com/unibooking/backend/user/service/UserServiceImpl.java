@@ -36,7 +36,7 @@ public class UserServiceImpl implements UserService{
         userModel.setUserName(userDTO.getUserName());
         userModel.setUserPhone(userDTO.getUserPhone());
         userModel.setUserPassword(userDTO.getUserPassword());
-        UserModel savedUser = userRepository.save(userModel);
+        userRepository.save(userModel);
         return true;
     }
 
