@@ -40,4 +40,12 @@ public class UserServiceImpl implements UserService{
         return true;
     }
 
+    @Override
+    public void deleteUser(Long id) throws UserNotFoundException {
+        if (!userRepository.existsById(id)) {
+            throw new UserNotFoundException("User with ID " + id + " not found.");
+        }
+        userRepository.deleteById(id);
+    }
+
 }

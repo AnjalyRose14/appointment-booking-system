@@ -32,5 +32,12 @@ public class UserController {
         userService.createUserProfile(userDTO);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
+
+    // delete user
+    @DeleteMapping("/deleteUser/{id}")
+    public ResponseEntity<String> deleteUser(@PathVariable Long id) {
+        userService.deleteUser(id);
+        return ResponseEntity.ok("User profile deleted successfully!");
+    }
 }
 
