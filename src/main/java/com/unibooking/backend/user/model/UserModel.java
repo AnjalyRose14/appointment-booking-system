@@ -21,7 +21,7 @@ public class UserModel {
     @Column(unique = true, nullable = false)
     private String userEmail;
     private String userPhone;
-    private String userPassword;
+    private String userPassword; //stored securely
     @CreationTimestamp
     private LocalDateTime createdAt;
     //private String role; // e.g., "USER", "PROVIDER", "ADMIN"

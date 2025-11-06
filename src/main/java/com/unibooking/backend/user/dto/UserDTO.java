@@ -1,6 +1,7 @@
 package com.unibooking.backend.user.dto;
 
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -11,6 +12,5 @@ public class UserDTO {
     private String userName;
     private String userEmail;
     private String userPhone;
-    private String userPassword;
-    private LocalDateTime createdAt;
 }
+
