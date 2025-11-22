@@ -39,24 +39,24 @@ public class UserController {
     }
 
     // Register new user
-    @PostMapping("/users/{id}")
-    public ResponseEntity<Void> createNewUser(@RequestBody RegisterDTO registerDTO) throws UserAlreadyExistsException {
-        userService.createUserProfile(registerDTO);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
-    }
+//    @PostMapping("/users/{id}")
+//    public ResponseEntity<Void> createNewUser(@RequestBody RegisterDTO registerDTO) throws UserAlreadyExistsException {
+//        userService.createUserProfile(registerDTO);
+//        return ResponseEntity.status(HttpStatus.CREATED).build();
+//    }
 
 
     //User Login
-    @PostMapping("/login")
-    public ResponseEntity<String> loginUser(@Valid @RequestBody LoginDTO loginDTO){
-        boolean isAuthenticated = userService.loginUser(loginDTO);
-
-        if (isAuthenticated) {
-            return ResponseEntity.ok("Login successful!");
-        } else {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid email or password");
-        }
-    }
+//    @PostMapping("/login")
+//    public ResponseEntity<String> loginUser(@Valid @RequestBody LoginDTO loginDTO){
+//        boolean isAuthenticated = userService.loginUser(loginDTO);
+//
+//        if (isAuthenticated) {
+//            return ResponseEntity.ok("Login successful!");
+//        } else {
+//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid email or password");
+//        }
+//    }
 
     // Update user details
     @PutMapping("/update")

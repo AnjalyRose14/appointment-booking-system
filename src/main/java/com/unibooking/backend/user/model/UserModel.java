@@ -17,12 +17,19 @@ public class UserModel {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long userId;
+    @Column(nullable = false)
     private String userName;
     @Column(unique = true, nullable = false)
     private String userEmail;
+    @Column(nullable = false)
     private String userPhone;
-    private String userPassword; //stored securely
+    @Column(nullable = false)
+    private String userPassword; //stored securely in DB by hashing
     @CreationTimestamp
     private LocalDateTime createdAt;
-    //private String role; // e.g., "USER", "PROVIDER", "ADMIN"
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role;
+    private boolean enabled = true;
+
 }
