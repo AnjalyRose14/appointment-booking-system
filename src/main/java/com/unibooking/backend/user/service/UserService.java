@@ -6,7 +6,7 @@ import com.unibooking.backend.user.dto.*;
 import com.unibooking.backend.user.model.UserModel;
 
 import java.util.List;
-import java.util.Optional;
+
 public interface UserService {
 
     // Get logged-in user's profile

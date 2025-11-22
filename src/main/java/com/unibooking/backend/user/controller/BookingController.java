@@ -8,6 +8,7 @@ import java.util.List;
 
     private final BookingService bookingService;
 
+    //Create Booking
     @PostMapping("/createBooking")
     public ResponseEntity<?> createBooking(@RequestBody BookingDTO bookingDTO) {
         try {
@@ -18,21 +19,25 @@ import java.util.List;
         }
     }
 
+    //Get bookings by user
     @GetMapping("/user/{emailId}")
     public ResponseEntity<List<BookingDTO>> getBookingsByUser(@PathVariable String emailId) {
         return ResponseEntity.ok(bookingService.getBookingsByUser(emailId));
     }
 
+    //Get bookings by provider
     @GetMapping("/provider/{providerId}")
     public ResponseEntity<List<BookingDTO>> getBookingsByProvider(@PathVariable Long providerId) {
         return ResponseEntity.ok(bookingService.getBookingsByProvider(providerId));
     }
 
+    //Check slot availability
     @GetMapping("/slot/{slotId}/availability")
     public ResponseEntity<Boolean> isSlotAvailable(@PathVariable Long slotId) {
         return ResponseEntity.ok(bookingService.isSlotAvailable(slotId));
     }
 
+    //Cancel booking
     @PutMapping("/cancel/{bookingId}")
     public ResponseEntity<?> cancelBooking(@PathVariable Long bookingId) {
         try {
@@ -43,6 +48,7 @@ import java.util.List;
         }
     }
 
+    //Reschedule Booking
     @PutMapping("/reschedule/{bookingId}/{newSlotId}")
     public ResponseEntity<?> rescheduleBooking(@PathVariable Long bookingId, @PathVariable Long newSlotId) {
         try {
@@ -53,6 +59,7 @@ import java.util.List;
         }
     }
 
+    //Paginated bookings by user
     @GetMapping("/user/{emailId}/paginated")
     public ResponseEntity<List<BookingDTO>> getPaginatedBookingsByUser(
             @PathVariable String emailId,
