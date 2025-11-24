@@ -10,6 +10,7 @@ public interface UserRepository extends JpaRepository<UserModel, Long> {
 
     // Find user by email (used for login or profile fetch)
     Optional<UserModel> findByUserEmail(String userEmail);
+    boolean existsByUserEmail(String userEmail);
 
     // You can add more custom query methods as needed
 }

@@ -1,5 +1,9 @@
 package com.unibooking.backend.user.dto;
 
+import com.unibooking.backend.user.model.Role;
+import jakarta.persistence.Column;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
@@ -18,4 +22,8 @@ public class RegisterDTO {
     private String userPassword;
 
     private String userPhone;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role;
 }

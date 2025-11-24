@@ -1,16 +1,19 @@
 package com.unibooking.backend.user.dto;
 
-
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.unibooking.backend.user.model.Role;
+import lombok.AllArgsConstructor;
 import lombok.Data;
-
-import java.time.LocalDateTime;
+import lombok.NoArgsConstructor;
 
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class UserDTO {
+
     private Long userId;
     private String userName;
     private String userEmail;
     private String userPhone;
+    private Role role;
+    private boolean enabled;
 }
-
