@@ -12,8 +12,9 @@ public interface ProviderRepository extends JpaRepository<ProviderModel, Long> {
     Optional<ProviderModel> findByProviderEmail(String providerEmail);
 
     // Filter providers by location
-//    List<ProviderModel> findByProviderLocation(String providerLocation);
+    List<ProviderModel> findByProviderLocation(String providerLocation);
 
     // Filter providers by category
     List<ProviderModel> findByProviderCategory(String providerCategory);
+
 }

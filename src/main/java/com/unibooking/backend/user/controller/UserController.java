@@ -6,7 +6,6 @@ import com.unibooking.backend.user.dto.LoginDTO;
 import com.unibooking.backend.user.dto.RegisterDTO;
 import com.unibooking.backend.user.dto.UpdateDTO;
 import com.unibooking.backend.user.dto.UserDTO;
-import com.unibooking.backend.user.model.UserModel;
 import com.unibooking.backend.user.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -15,7 +14,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/user")
