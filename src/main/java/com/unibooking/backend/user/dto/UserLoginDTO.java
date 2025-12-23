@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 @Data // This automatically generates getters, setters, etc
-public class LoginDTO {
+public class UserLoginDTO {
     @Email(message = "Invalid email format")
     @NotBlank(message = "Email cannot be empty")
     private String userEmail;

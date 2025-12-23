@@ -2,9 +2,14 @@ package com.unibooking.backend.user.service;
 
 import com.unibooking.backend.Exception.BookingNotFoundException;
 import com.unibooking.backend.Exception.SlotAlreadyBookedException;
+import com.unibooking.backend.Exception.SlotNotFoundException;
+import com.unibooking.backend.Exception.UserNotFoundException;
 import com.unibooking.backend.user.dto.BookingDTO;
-import com.unibooking.backend.user.model.BookingModel;
+import com.unibooking.backend.user.model.*;
 import com.unibooking.backend.user.repository.BookingRepository;
+import com.unibooking.backend.user.repository.SlotRepository;
+import com.unibooking.backend.user.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -15,113 +20,134 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class BookingServiceImpl implements BookingService {
+
     private final BookingRepository bookingRepository;
+    private final SlotRepository slotRepository;
+    private final UserRepository userRepository;
 
     @Override
-    public BookingDTO createBooking(BookingDTO bookingDTO) {
-        if (!isSlotAvailable(bookingDTO.getSlotId())) {
-            throw new SlotAlreadyBookedException("Slot is already booked: " + bookingDTO.getSlotId());
+    @Transactional
+    public BookingDTO createBooking(Long slotId, String userEmail) {
+
+        UserModel user = userRepository.findByUserEmail(userEmail)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+        SlotModel slot = slotRepository.findById(slotId)
+                .orElseThrow(() -> new SlotNotFoundException("Slot not found"));
+
+        if (slot.getStatus() != SlotStatus.AVAILABLE) {
+            throw new SlotAlreadyBookedException("Slot already booked");
         }
 
+        ProviderModel provider = slot.getProvider();
+
         BookingModel booking = new BookingModel();
-        booking.setEmailId(bookingDTO.getEmailId());
-        booking.setProviderId(bookingDTO.getProviderId());
-        booking.setSlotId(bookingDTO.getSlotId());
-        booking.setBookingDate(bookingDTO.getBookingDate());
-        booking.setBookingStatus("CONFIRMED");
+        booking.setUser(user);
+        booking.setSlot(slot);
+        booking.setProvider(provider);
+        booking.setBookingStatus(BookingStatus.CONFIRMED);
 
-        BookingModel savedBooking = bookingRepository.save(booking);
+        bookingRepository.save(booking);
 
-        return new BookingDTO(
-                savedBooking.getBookingId(),
-                savedBooking.getEmailId(),
-                savedBooking.getProviderId(),
-                savedBooking.getSlotId(),
-                savedBooking.getBookingDate(),
-                savedBooking.getBookingStatus()
-        );
+        // update slot
+        slot.setStatus(SlotStatus.BOOKED);
+        slotRepository.save(slot);
+
+        return mapToDTO(booking);
     }
 
     @Override
-    public List<BookingDTO> getBookingsByUser(String emailId) {
-        return bookingRepository.findByEmailId(emailId)
+    public List<BookingDTO> getBookingsByUser(String userEmail) {
+        return bookingRepository.findByUser_UserEmail(userEmail)
                 .stream()
-                .map(b -> new BookingDTO(
-                        b.getBookingId(),
-                        b.getEmailId(),
-                        b.getProviderId(),
-                        b.getSlotId(),
-                        b.getBookingDate(),
-                        b.getBookingStatus()
-                ))
-                .collect(Collectors.toList());
+                .map(this::mapToDTO)
+                .toList();
     }
 
     @Override
     public List<BookingDTO> getBookingsByProvider(Long providerId) {
-        return bookingRepository.findByProviderId(providerId)
-                .stream()
-                .map(b -> new BookingDTO(
-                        b.getBookingId(),
-                        b.getEmailId(),
-                        b.getProviderId(),
-                        b.getSlotId(),
-                        b.getBookingDate(),
-                        b.getBookingStatus()
-                ))
+
+        List<BookingModel> bookings =
+                bookingRepository.findByProvider_ProviderId(providerId);
+
+        return bookings.stream()
+                .map(this::mapToDTO)
                 .collect(Collectors.toList());
     }
 
-    @Override
-    public Boolean isSlotAvailable(Long slotId) {
-        return bookingRepository.findBySlotId(slotId).isEmpty();
-    }
 
     @Override
-    public void cancelBooking(Long bookingId) {
+    public void cancelBooking(Long bookingId, String userEmail) {
+
         BookingModel booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new BookingNotFoundException("Booking not found: " + bookingId));
+                .orElseThrow(() -> new BookingNotFoundException("Booking not found"));
 
-        booking.setBookingStatus("CANCELLED");
-        bookingRepository.save(booking);
-    }
-
-    @Override
-    public BookingDTO rescheduleBooking(Long bookingId, Long newSlotId) {
-        BookingModel booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new BookingNotFoundException("Booking not found: " + bookingId));
-
-        if (!isSlotAvailable(newSlotId)) {
-            throw new SlotAlreadyBookedException("New slot is already booked: " + newSlotId);
+        if (!booking.getUser().getUserEmail().equals(userEmail)) {
+            throw new RuntimeException("Unauthorized cancellation");
         }
 
-        booking.setSlotId(newSlotId);
-        booking.setBookingStatus("RESCHEDULED");
-        BookingModel updatedBooking = bookingRepository.save(booking);
+        SlotModel slot = booking.getSlot();
+        slot.setStatus(SlotStatus.AVAILABLE);
 
-        return new BookingDTO(
-                updatedBooking.getBookingId(),
-                updatedBooking.getEmailId(),
-                updatedBooking.getProviderId(),
-                updatedBooking.getSlotId(),
-                updatedBooking.getBookingDate(),
-                updatedBooking.getBookingStatus()
-        );
+
+        booking.setBookingStatus(BookingStatus.CANCELLED);
+
+        bookingRepository.save(booking);
+        slotRepository.save(slot);
     }
 
     @Override
-    public List<BookingDTO> getPaginatedBookingsByUser(String emailId, int page, int size) {
-        return bookingRepository.findByEmailId(emailId, PageRequest.of(page, size))
-                .stream()
-                .map(b -> new BookingDTO(
-                        b.getBookingId(),
-                        b.getEmailId(),
-                        b.getProviderId(),
-                        b.getSlotId(),
-                        b.getBookingDate(),
-                        b.getBookingStatus()
-                ))
-                .collect(Collectors.toList());
+    public BookingDTO rescheduleBooking(Long bookingId, Long newSlotId, String userEmail) {
+
+        BookingModel booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new BookingNotFoundException("Booking not found"));
+
+        if (!booking.getUser().getUserEmail().equals(userEmail)) {
+            throw new RuntimeException("Unauthorized reschedule");
+        }
+
+        SlotModel newSlot = slotRepository.findById(newSlotId)
+                .orElseThrow(() -> new RuntimeException("Slot not found"));
+
+        if (newSlot.getStatus() != SlotStatus.AVAILABLE) {
+            throw new SlotAlreadyBookedException("Slot already booked");
+        }
+
+        SlotModel oldSlot = booking.getSlot();
+        oldSlot.setStatus(SlotStatus.AVAILABLE);
+
+        booking.setSlot(newSlot);
+
+        newSlot.setStatus(SlotStatus.BOOKED);
+
+
+        slotRepository.save(oldSlot);
+        slotRepository.save(newSlot);
+        bookingRepository.save(booking);
+
+        return mapToDTO(booking);
     }
 
+
+    @Override
+    public List<BookingDTO> getPaginatedBookingsByUser(String userEmail, int page, int size) {
+        return bookingRepository
+                .findByUser_UserEmail(userEmail, PageRequest.of(page, size))
+                .stream()
+                .map(this::mapToDTO)
+                .toList();
+    }
+
+    private BookingDTO mapToDTO(BookingModel booking) {
+        BookingDTO dto = new BookingDTO();
+
+        dto.setBookingId(booking.getBookingId());
+        dto.setUserId(booking.getUser().getUserId());
+        dto.setEmailId(booking.getUser().getUserEmail());
+        dto.setSlotId(booking.getSlot().getSlotId());
+        dto.setProviderId(booking.getProvider().getProviderId());
+        dto.setBookingStatus(booking.getBookingStatus());
+        dto.setBookedAt(booking.getBookedAt());
+        return dto;
+    }
 }

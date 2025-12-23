@@ -2,13 +2,15 @@ package com.unibooking.backend.user.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @AllArgsConstructor
-public class AuthResponseDTO {
+@NoArgsConstructor
+public class ProviderAuthResponseDTO {
 
     private String token;
-    private Long userId;
+    private Long providerId;
     private String email;
     private String role;
 }

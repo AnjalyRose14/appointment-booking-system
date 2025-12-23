@@ -1,15 +1,14 @@
 package com.unibooking.backend.user.controller;
 
-import com.unibooking.backend.Exception.ProviderAlreadyExistsException;
 import com.unibooking.backend.Exception.ProviderNotFoundException;
-import com.unibooking.backend.user.dto.ProviderLoginDTO;
-import com.unibooking.backend.user.dto.ProviderRegisterDTO;
-import com.unibooking.backend.user.dto.ProviderResponseDTO;
+import com.unibooking.backend.user.dto.ProviderDTO;
 import com.unibooking.backend.user.dto.ProviderUpdateDTO;
 import com.unibooking.backend.user.service.ProviderService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,75 +20,88 @@ public class ProviderController {
 
     private final ProviderService providerService;
 
-    // Register a new service (business/organisation)
-    @PostMapping("/register")
-    public ResponseEntity<?> registerProvider(@RequestBody ProviderRegisterDTO registerDTO) {
-        try {
-            providerService.registerProvider(registerDTO);
-            return ResponseEntity.status(HttpStatus.CREATED).build();
-        } catch (ProviderAlreadyExistsException ex) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
-        }
-    }
+
+    /* ---------- PUBLIC API (NO AUTH Required) ----------*/
 
     // List all services
     @GetMapping
-    public ResponseEntity<List<ProviderResponseDTO>> getAllServices() {
+    public ResponseEntity<List<ProviderDTO>> getAllServices() {
         return ResponseEntity.ok(providerService.getAllProviders());
     }
 
-    //Login using email and password
-    @PostMapping("/login")
-    public ResponseEntity<String> loginProvider(@RequestBody ProviderLoginDTO loginDTO) {
-        String result = providerService.loginProvider(loginDTO);
-        return ResponseEntity.ok(result);
-    }
 
-
-    // Get service details by email
-    @GetMapping("/details")
-    public ResponseEntity<?> getServiceDetails(@RequestParam String email) {
-        try {
-            ProviderResponseDTO provider = providerService.getProviderByEmail(email);
-            return ResponseEntity.ok(provider);
-        } catch (ProviderNotFoundException ex) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
-        }
+    // Get service details by ID (PUBLIC)
+    @GetMapping("/{id}")
+    public ResponseEntity<ProviderDTO> getServiceById(@PathVariable Long id)
+            throws ProviderNotFoundException {
+        return ResponseEntity.ok(providerService.getProviderById(id));
     }
 
 
     // Get services by location
     @GetMapping("/location")
-    public ResponseEntity<List<ProviderResponseDTO>> getServicesByLocation(@RequestParam String location) {
+    public ResponseEntity<List<ProviderDTO>> getServicesByLocation(@RequestParam String location) {
         return ResponseEntity.ok(providerService.getProvidersByLocation(location));
     }
 
     // Get services by category
     @GetMapping("/category")
-    public ResponseEntity<List<ProviderResponseDTO>> getServicesByCategory(@RequestParam String category) {
+    public ResponseEntity<List<ProviderDTO>> getServicesByCategory(@RequestParam String category) {
         return ResponseEntity.ok(providerService.getProvidersByCategory(category));
     }
 
-    // Delete provider by email
-    @DeleteMapping("/delete")
-    public ResponseEntity<?> deleteProvider(@RequestParam String email) {
-        try {
-            providerService.deleteProviderByEmail(email);
-            return ResponseEntity.ok("Provider deleted successfully.");
-        } catch (ProviderNotFoundException ex) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
-        }
+
+
+
+    /* ---------- PROVIDER-ONLY APIs (JWT + ROLE_PROVIDER REQUIRED) ----------*/
+
+    // Get current provider profile (SELF)
+    @GetMapping("/currentProvider")
+    @PreAuthorize("hasRole('PROVIDER')")
+    public ResponseEntity<ProviderDTO> getMyProfile(
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        String providerEmail = userDetails.getUsername();
+        return ResponseEntity.ok(providerService.getProviderProfile(providerEmail));
     }
 
-    // Update provider details
+    // Update provider details (SELF)
     @PutMapping("/update")
-    public ResponseEntity<?> updateProvider(@RequestBody ProviderUpdateDTO updateDTO) {
-        try {
-            ProviderResponseDTO updatedProvider = providerService.updateProvider(updateDTO);
-            return ResponseEntity.ok(updatedProvider);
-        } catch (ProviderNotFoundException ex) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
-        }
+    @PreAuthorize("hasRole('PROVIDER')")
+    public ResponseEntity<ProviderDTO> updateProvider(
+            @RequestBody ProviderUpdateDTO updateDTO,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        String providerEmail = userDetails.getUsername();
+
+        ProviderDTO updated =
+                providerService.updateProviderProfile(providerEmail, updateDTO);
+
+        return ResponseEntity.ok(updated);
+    }
+
+    // Delete provider  (SELF)
+    @DeleteMapping("/delete")
+    @PreAuthorize("hasRole('PROVIDER')")
+    public ResponseEntity<Void> deleteProvider(
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        String providerEmail = userDetails.getUsername();
+        providerService.deleteProviderByEmail(providerEmail);
+
+        return ResponseEntity.noContent().build();
+    }
+
+
+
+    /* ---------- ADMIN ---------- */
+
+    // ADMIN: delete any provider by ID
+    @DeleteMapping("/admin/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<String> deleteProviderByAdmin(@PathVariable Long id) {
+        providerService.deleteProviderByAdmin(id);
+        return ResponseEntity.ok("User profile deleted successfully!");
     }
 
 }

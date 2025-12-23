@@ -7,10 +7,10 @@ import java.time.LocalDateTime;
 @Data
 public class ProviderUpdateDTO {
 
-    private Long providerId;
-
     private String providerName;
     private String providerPhone;
+    private String providerPassword;  // optional
+
 
     private String providerBusinessName;
     private String providerCategory;

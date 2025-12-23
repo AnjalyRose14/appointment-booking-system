@@ -5,17 +5,16 @@ import com.unibooking.backend.user.dto.BookingDTO;
 import java.util.List;
 
 public interface BookingService {
-    BookingDTO createBooking(BookingDTO bookingDTO);
 
-    List<BookingDTO> getBookingsByUser(String emailId);
+    BookingDTO createBooking(Long slotId, String userEmail);
+
+    List<BookingDTO> getBookingsByUser(String userEmail);
 
     List<BookingDTO> getBookingsByProvider(Long providerId);
 
-    Boolean isSlotAvailable(Long slotId);
+    void cancelBooking(Long bookingId, String userEmail);
 
-    void cancelBooking(Long bookingId);
+    BookingDTO rescheduleBooking(Long bookingId, Long newSlotId, String userEmail);
 
-    BookingDTO rescheduleBooking(Long bookingId, Long newSlotId);
-
-    List<BookingDTO> getPaginatedBookingsByUser(String emailId, int page, int size);
+    List<BookingDTO> getPaginatedBookingsByUser(String userEmail, int page, int size);
 }

@@ -1,38 +1,35 @@
 package com.unibooking.backend.user.service;
 
 import com.unibooking.backend.Exception.ProviderNotFoundException;
-import com.unibooking.backend.user.dto.ProviderLoginDTO;
-import com.unibooking.backend.user.dto.ProviderRegisterDTO;
-import com.unibooking.backend.user.dto.ProviderResponseDTO;
-import com.unibooking.backend.user.dto.ProviderUpdateDTO;
+import com.unibooking.backend.user.dto.*;
 
 import java.util.List;
 
 public interface ProviderService {
 
-    //Register Provider
-    ProviderResponseDTO registerProvider(ProviderRegisterDTO registerDTO);
-
     //Get all providers
-    List<ProviderResponseDTO> getAllProviders();
+    List<ProviderDTO> getAllProviders();
 
-    //Login Provider
-    String loginProvider(ProviderLoginDTO loginDTO);
-
-    //Get provider by email
-    ProviderResponseDTO getProviderByEmail(String email) throws ProviderNotFoundException;
-
+    //Get provider by id
+    ProviderDTO getProviderById(Long id);
 
     //Get providers by location
-    List<ProviderResponseDTO> getProvidersByLocation(String location);
+    List<ProviderDTO> getProvidersByLocation(String location);
 
     //Get providers by category
-    List<ProviderResponseDTO> getProvidersByCategory(String category);
+    List<ProviderDTO> getProvidersByCategory(String category);
 
-    //Update Provider
-    ProviderResponseDTO updateProvider(ProviderUpdateDTO updateDTO) throws ProviderNotFoundException;
+    //Get current provider by email (email extracted from JWT)
+    ProviderDTO getProviderProfile(String email) throws ProviderNotFoundException;
 
-    //Delete Provider
+    //  Update an existing provider profile identified by email (the caller's email from token)
+    ProviderDTO updateProviderProfile(String email, ProviderUpdateDTO dto) throws ProviderNotFoundException;
+
+    //Delete the provider identified by email (self-delete use-case)
     void deleteProviderByEmail(String providerEmail) throws ProviderNotFoundException;
 
+    // Delete a provider by id (admin-only)
+    void deleteProviderByAdmin(Long id) throws ProviderNotFoundException;
+
+    Long getProviderIdByEmail(String email);
 }

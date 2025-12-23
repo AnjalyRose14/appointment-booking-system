@@ -1,6 +1,5 @@
 package com.unibooking.backend.user.security;
 
-import com.unibooking.backend.user.model.UserModel;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,13 +23,22 @@ public class JwtService {
         return Keys.hmacShaKeyFor(secretKey.getBytes());
     }
 
-    public String generateToken(UserModel user) {
+
+    //Generate token for BOTH User & Provider
+    public String generateToken(UserDetails userDetails) {
+
         Date now = new Date();
         Date expiry = new Date(now.getTime() + jwtExpirationMs);
 
+        String role = userDetails.getAuthorities()
+                .stream()
+                .findFirst()
+                .map(auth -> auth.getAuthority())
+                .orElse("ROLE_USER");
+
         return Jwts.builder()
-                .setSubject(user.getUserEmail())
-                .claim("role", user.getRole().name())
+                .setSubject(userDetails.getUsername())
+                .claim("role", role)
                 .setIssuedAt(now)
                 .setExpiration(expiry)
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)

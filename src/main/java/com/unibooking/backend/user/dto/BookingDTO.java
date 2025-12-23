@@ -1,5 +1,6 @@
 package com.unibooking.backend.user.dto;
 
+import com.unibooking.backend.user.model.BookingStatus;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -11,9 +12,11 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class BookingDTO {
     private Long bookingId;
+    private Long userId;
     private String emailId;
-    private Long providerId;
     private Long slotId;
-    private LocalDateTime bookingDate;
-    private String bookingStatus;
+    private Long providerId;
+    private BookingStatus bookingStatus;
+    private LocalDateTime bookedAt;
+
 }

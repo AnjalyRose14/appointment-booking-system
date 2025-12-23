@@ -1,6 +1,5 @@
 package com.unibooking.backend.user.service;
 
-import com.unibooking.backend.Exception.SlotNotFoundException;
 import com.unibooking.backend.user.dto.SlotCreateDTO;
 import com.unibooking.backend.user.dto.SlotResponseDTO;
 import com.unibooking.backend.user.dto.SlotUpdateDTO;
@@ -9,13 +8,19 @@ import java.util.List;
 
 public interface SlotService {
 
-    SlotResponseDTO createSlot(SlotCreateDTO createDTO);
+    SlotResponseDTO createSlot(String providerEmail, SlotCreateDTO dto);
 
-    SlotResponseDTO updateSlotStatus(SlotUpdateDTO updateDTO) throws SlotNotFoundException;
+    SlotResponseDTO updateSlotStatus(
+            Long slotId,
+            String providerEmail,
+            SlotUpdateDTO dto
+    );
 
     List<SlotResponseDTO> getSlotsByProvider(Long providerId);
 
+    void deleteSlot(Long slotId, String providerEmail);
+
     boolean isSlotAvailable(Long slotId);
 
-    void deleteSlot(Long slotId) throws SlotNotFoundException;
+
 }

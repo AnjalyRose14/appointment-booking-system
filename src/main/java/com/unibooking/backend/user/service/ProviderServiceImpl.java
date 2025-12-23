@@ -1,16 +1,14 @@
 package com.unibooking.backend.user.service;
 
 import com.unibooking.backend.Exception.ProviderNotFoundException;
-import com.unibooking.backend.user.dto.ProviderLoginDTO;
-import com.unibooking.backend.user.dto.ProviderRegisterDTO;
-import com.unibooking.backend.user.dto.ProviderResponseDTO;
-import com.unibooking.backend.user.dto.ProviderUpdateDTO;
+import com.unibooking.backend.user.dto.*;
 import com.unibooking.backend.user.model.ProviderModel;
 import com.unibooking.backend.user.repository.ProviderRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -19,124 +17,135 @@ import java.util.stream.Collectors;
 public class ProviderServiceImpl implements ProviderService {
 
     private final ProviderRepository providerRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    //Register
+
+            //Get all providers
+            @Override
+            public List<ProviderDTO> getAllProviders() {
+                return providerRepository.findAll()
+                        .stream()
+                        .map(this::ConvertToDTO)
+                        .collect(Collectors.toList());
+            }
+
+            //Converts Entity to DTO
+            private ProviderDTO ConvertToDTO(ProviderModel provider) {
+                    ProviderDTO dto = new ProviderDTO();
+
+                        dto.setProviderId(provider.getProviderId());
+                        dto.setProviderName(provider.getProviderName());
+                        dto.setProviderEmail(provider.getProviderEmail());
+                        dto.setProviderPhone(provider.getProviderPhone());
+                        dto.setProviderBusinessName(provider.getProviderBusinessName());
+                        dto.setProviderCategory(provider.getProviderCategory());
+                        dto.setProviderAddress(provider.getProviderAddress());
+                        dto.setProviderLocation(provider.getProviderLocation());
+                        dto.setProviderDescription(provider.getProviderDescription());
+
+                return dto;
+
+            }
+
+            @Override
+            public ProviderDTO getProviderById(Long providerId) {
+
+                ProviderModel provider = providerRepository.findById(providerId)
+                        .orElseThrow(() ->
+                                new ProviderNotFoundException(
+                                        "Provider not found with id: " + providerId));
+
+                return ConvertToDTO(provider);
+            }
+
+
+            //Get by location
+            @Override
+            public List<ProviderDTO> getProvidersByLocation(String location) {
+                return providerRepository.findByProviderLocation(location)
+                        .stream()
+                        .map(this::ConvertToDTO)
+                        .collect(Collectors.toList());
+            }
+
+            //Get by Category
+            @Override
+            public List<ProviderDTO> getProvidersByCategory(String category) {
+                return providerRepository.findByProviderCategory(category)
+                        .stream()
+                        .map(this::ConvertToDTO)
+                        .collect(Collectors.toList());
+            }
+
+            //Get provider by email (email from JWT token)
+            @Override
+            public ProviderDTO getProviderProfile(String email) throws ProviderNotFoundException {
+                ProviderModel provider = providerRepository.findByProviderEmail(email)
+                        .orElseThrow(() -> new ProviderNotFoundException("Provider not found with email: " + email));
+
+                return ConvertToDTO(provider);
+            }
+
+            //Update by provider
+            @Override
+            @Transactional
+            public ProviderDTO updateProviderProfile(String email, ProviderUpdateDTO updateDTO) throws ProviderNotFoundException{
+
+                ProviderModel provider = providerRepository.findByProviderEmail(email)
+                        .orElseThrow(() -> new ProviderNotFoundException("Provider not found:" + email));
+
+                // update allowed fields only
+                if (updateDTO.getProviderName() != null)
+                    provider.setProviderName(updateDTO.getProviderName());
+
+                if (updateDTO.getProviderPhone() != null)
+                    provider.setProviderPhone(updateDTO.getProviderPhone());
+
+                if (updateDTO.getProviderBusinessName() != null)
+                    provider.setProviderBusinessName(updateDTO.getProviderBusinessName());
+
+                if (updateDTO.getProviderCategory() != null)
+                    provider.setProviderCategory(updateDTO.getProviderCategory());
+
+                if (updateDTO.getProviderAddress() != null)
+                    provider.setProviderAddress(updateDTO.getProviderAddress());
+
+                if (updateDTO.getProviderLocation() != null)
+                    provider.setProviderLocation(updateDTO.getProviderLocation());
+
+                if (updateDTO.getProviderDescription() != null)
+                    provider.setProviderDescription(updateDTO.getProviderDescription());
+
+                if (updateDTO.getProviderPassword() != null && !updateDTO.getProviderPassword().isBlank()) {
+                    provider.setProviderPassword(passwordEncoder.encode(updateDTO.getProviderPassword()));
+                }
+
+                providerRepository.save(provider);
+                return null;
+            }
+
+            // Delete own Account (Authenticated User)
+            @Override
+            public void deleteProviderByEmail(String email) throws ProviderNotFoundException {
+                ProviderModel provider = providerRepository.findByProviderEmail(email)
+                        .orElseThrow(() -> new ProviderNotFoundException("Provider not found"));
+
+                providerRepository.delete(provider);
+            }
+
+            //Delete provider by ID (Admin)
+            @Override
+            public void deleteProviderByAdmin(Long id) throws ProviderNotFoundException {
+                if (!providerRepository.existsById(id)) {
+                    throw new ProviderNotFoundException("Provider with ID " + id + "not found");
+                }
+                providerRepository.deleteById(id);
+            }
+
     @Override
-    public ProviderResponseDTO registerProvider(ProviderRegisterDTO registerDTO) {
-
-        // Check if email already exists
-        providerRepository.findByProviderEmail(registerDTO.getProviderEmail())
-                .ifPresent(p -> {
-                    throw new RuntimeException("Provider already exists");
-                });
-
-        ProviderModel provider = ProviderModel.builder()
-                .providerName(registerDTO.getProviderName())
-                .providerEmail(registerDTO.getProviderEmail())
-                .providerPassword(registerDTO.getProviderPassword())
-                .providerPhone(registerDTO.getProviderPhone())
-                .providerBusinessName(registerDTO.getProviderBusinessName())
-                .providerCategory(registerDTO.getProviderCategory())
-                .providerAddress(registerDTO.getProviderAddress())
-                .providerLocation(registerDTO.getProviderLocation())
-                .providerDescription(registerDTO.getProviderDescription())
-                .providerCreatedAt(LocalDateTime.now())
-                .build();
-
-        ProviderModel saved = providerRepository.save(provider);
-        return mapToResponseDTO(saved);
-
-    }
-
-    //Login
-    @Override
-    public String loginProvider(ProviderLoginDTO loginDTO) {
-        ProviderModel provider = providerRepository.findByProviderEmail(loginDTO.getProviderEmail())
-                .orElseThrow(() -> new RuntimeException("Provider not found"));
-
-        if (!provider.getProviderPassword().equals(loginDTO.getProviderPassword())) {
-            return "Invalid password";
-        }
-        return "Login successful";
-    }
-
-
-    //Get by email
-    @Override
-    public ProviderResponseDTO getProviderByEmail(String email) throws ProviderNotFoundException {
-        ProviderModel provider = providerRepository.findByProviderEmail(email)
-                .orElseThrow(() -> new ProviderNotFoundException("Provider not found with email: " + email));
-
-        return mapToResponseDTO(provider);
-    }
-
-    //Get all providers
-    @Override
-    public List<ProviderResponseDTO> getAllProviders() {
-        return providerRepository.findAll()
-                .stream()
-                .map(this::mapToResponseDTO)
-                .collect(Collectors.toList());
-    }
-
-    //Get by location
-    @Override
-    public List<ProviderResponseDTO> getProvidersByLocation(String location) {
-        return providerRepository.findByProviderLocation(location)
-                .stream()
-                .map(this::mapToResponseDTO)
-                .collect(Collectors.toList());
-    }
-
-    //Get by Category
-    @Override
-    public List<ProviderResponseDTO> getProvidersByCategory(String category) {
-        return providerRepository.findByProviderCategory(category)
-                .stream()
-                .map(this::mapToResponseDTO)
-                .collect(Collectors.toList());
-    }
-
-    //Delete
-    @Override
-    public void deleteProviderByEmail(String email) throws ProviderNotFoundException {
-        ProviderModel provider = providerRepository.findByProviderEmail(email)
-                .orElseThrow(() -> new ProviderNotFoundException("Provider not found with email: " + email));
-        providerRepository.delete(provider);
-    }
-
-    //Update
-    @Override
-    public ProviderResponseDTO updateProvider(ProviderUpdateDTO updateDTO) throws ProviderNotFoundException {
-        ProviderModel provider = providerRepository.findById(updateDTO.getProviderId())
-                .orElseThrow(() -> new ProviderNotFoundException("Provider not found with email: " + updateDTO.getProviderId()));
-
-        provider.setProviderName(updateDTO.getProviderName());
-        provider.setProviderPhone(updateDTO.getProviderPhone());
-        provider.setProviderBusinessName(updateDTO.getProviderBusinessName());
-        provider.setProviderCategory(updateDTO.getProviderCategory());
-        provider.setProviderAddress(updateDTO.getProviderAddress());
-        provider.setProviderLocation(updateDTO.getProviderLocation());
-        provider.setProviderDescription(updateDTO.getProviderDescription());
-
-        ProviderModel updated = providerRepository.save(provider);
-        return mapToResponseDTO(updated);
-    }
-
-//MAPPER - Converts entity to response DTO
-    private ProviderResponseDTO mapToResponseDTO(ProviderModel provider) {
-        return new ProviderResponseDTO(
-
-                provider.getProviderId(),
-                provider.getProviderName(),
-                provider.getProviderEmail(),
-                provider.getProviderPhone(),
-                provider.getProviderBusinessName(),
-                provider.getProviderCategory(),
-                provider.getProviderAddress(),
-                provider.getProviderLocation(),
-                provider.getProviderDescription(),
-                provider.getProviderCreatedAt()
-        );
+    public Long getProviderIdByEmail(String email) {
+        return providerRepository.findByProviderEmail(email)
+                .orElseThrow(() -> new RuntimeException("Provider not found"))
+                .getProviderId();
     }
 }

@@ -1,6 +1,5 @@
 package com.unibooking.backend.user.service;
 
-import com.unibooking.backend.Exception.UserAlreadyExistsException;
 import com.unibooking.backend.Exception.UserNotFoundException;
 import com.unibooking.backend.user.dto.*;
 import com.unibooking.backend.user.model.UserModel;
@@ -9,23 +8,22 @@ import java.util.List;
 
 public interface UserService {
 
-    // Get logged-in user's profile
+    // Get logged-in user's profile by email (email extracted from JWT)
     UserDTO getUserProfile(String email) throws UserNotFoundException;
-    //get all users
+
+    // Return all users (admin-only use)
     List<UserDTO> getAllUsers();
 
-    // register new user
-    Boolean createUserProfile(RegisterDTO registerDTO) throws UserAlreadyExistsException;
+    //  Update an existing user profile identified by email (the caller's email from token)
+    void updateUserProfile(String email, UserUpdateDTO updateDTO) throws UserNotFoundException;
 
-    // login user
-    Boolean loginUser(LoginDTO loginDTO);
-
-    // Update existing user profile
-    UserModel updateUserProfile(UpdateDTO updateDTO) throws UserNotFoundException;
-
-    //delete user
+    // Delete a user by id (admin-only)
     void deleteUser(Long id) throws UserNotFoundException;
 
+    //Delete the user identified by email (self-delete use-case)
+    void deleteUserByEmail(String email) throws UserNotFoundException;
 
-    Object convertToDTO(UserModel userModel);
+
+    //Convert a UserModel entity to UserDTO
+    UserDTO convertToDTO(UserModel userModel);
 }

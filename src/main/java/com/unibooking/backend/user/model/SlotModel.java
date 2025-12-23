@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -22,16 +23,20 @@ public class SlotModel {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long slotId;
 
-    private Long providerId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "provider_id", nullable = false)
+    private ProviderModel provider;
 
     private LocalDate date;
-
     private LocalTime startTime;
-
     private LocalTime endTime;
 
-    private String status; // AVAILABLE / BOOKED
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private SlotStatus status;
 
+
+    @CreationTimestamp
     private LocalDateTime createdAt;
 
 

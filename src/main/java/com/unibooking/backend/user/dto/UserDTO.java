@@ -15,5 +15,4 @@ public class UserDTO {
     private String userEmail;
     private String userPhone;
     private Role role;
-    private boolean enabled;
 }

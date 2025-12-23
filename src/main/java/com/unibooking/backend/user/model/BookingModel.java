@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
@@ -18,17 +19,22 @@ public class BookingModel {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long bookingId;
 
-    @Column(nullable = false,name = "USER_EMAIL")
-    private String emailId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "USER_ID", nullable = false)
+    private UserModel user;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "provider_id", nullable = false)
+    private ProviderModel provider;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "SLOT_ID", nullable = false)
+    private SlotModel slot;
+
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Long providerId;
+    private BookingStatus bookingStatus;
 
-    @Column(nullable = false)
-    private Long slotId;
-
-    @Column(nullable = false)
-    private LocalDateTime bookingDate;
-
-    private String bookingStatus; // CONFIRMED, CANCELLED, COMPLETED
+    @CreationTimestamp
+    private LocalDateTime bookedAt;
 }

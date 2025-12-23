@@ -1,5 +1,6 @@
 package com.unibooking.backend.user.dto;
 
+import com.unibooking.backend.user.model.Role;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -9,7 +10,7 @@ import java.time.LocalDateTime;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class ProviderResponseDTO {
+public class ProviderDTO {
 
     private Long providerId;
     private String providerName; // Name of service (e.g., Haircut, Consultation)
