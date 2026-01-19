@@ -11,10 +11,26 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
+    
     permissions:
       contents: read #This is required for actions/checkout
 
+      services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_DATABASE: unibooking
+          MYSQL_USER: unibook_user
+          MYSQL_PASSWORD: StrongPassword123!
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
     steps:
       - uses: actions/checkout@v4
 
@@ -60,4 +76,5 @@ jobs:
           app-name: 'spring-unibook'
           slot-name: 'Production'
           package: '*.jar'
+
           
