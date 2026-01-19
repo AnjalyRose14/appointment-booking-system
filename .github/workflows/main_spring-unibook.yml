@@ -16,8 +16,8 @@ jobs:
     permissions:
       contents: read #This is required for actions/checkout
 
-      services:
-      mysql:
+    services:
+     mysql:
         image: mysql:8.0
         env:
           MYSQL_DATABASE: unibooking
@@ -78,3 +78,4 @@ jobs:
           package: '*.jar'
 
           
+
